@@ -1,4 +1,4 @@
-# DuoMAG ToolBox MP (Python Port)
+# DuoMAG ToolBox MP (Python Port; Driver not included)
 
 This project is a Python-based port of DuoMAG ToolBox MATLAB script designed to control paired-pulse Transcranial Magnetic Stimulation (TMS) using DuoMAG MP stimulators via serial communication. It reproduces key functionality such as user-driven mode selection, serial port interfacing, pulse delivery, and session logging. DuoMAG Driver not included.
 
