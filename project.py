@@ -23,9 +23,9 @@ def user_input():
             if 1 <= intensity <= 100:
                 break
             else:
-                print("Valid range is between 1 - 100, an integer.")
+                print("\nValid range is between 1 - 100, an integer.\n")
         except ValueError:
-            print("Not a valid number. Please enter an integer.")
+            print("\nNot a valid number. Please enter an integer.\n")
 
     while True:
         total_pulses = input("Enter the total no. of pulses (e.g., 360 for 180 pairs): ")
@@ -34,9 +34,9 @@ def user_input():
             if total_pulses > 6:
                 break
             else:
-                print("Please enter a multiple of 6 (to fit variable pulse frequency mode).")
+                print("\nPlease enter a multiple of 6.\n")
         except ValueError:
-            print("Not a valid number. Please enter a multiple of 6 integer.")
+            print("\nNot a valid number. Please enter a multiple of 6 integer.\n")
 
 
     while True:
@@ -51,9 +51,9 @@ def user_input():
             if stim_mode in (1, 2, 3):
                 break
             else:
-                print("Valid mode is 1 / 2 / 3")
+                print("\nValid mode is 1 / 2 / 3\n")
         except ValueError:
-            print("Not a valid number. Please choose from 1 - 3.")
+            print("\nNot a valid number. Please choose from 1 - 3.\n")
     
     match stim_mode:
         case 1:
@@ -66,9 +66,9 @@ def user_input():
                     if delay_ms > 0:
                         break
                     else:
-                        print("Delay has to be greater than 0.")
+                        print("\nDelay has to be greater than 0.\n")
                 except ValueError:
-                    print("Not a valid number. Delay has to be a non-zero integer.")
+                    print("\nNot a valid number. Delay has to be a non-zero integer.\n")
 
     while True:
         print("Select Frequency Mode: ")
@@ -81,9 +81,9 @@ def user_input():
             if freq_mode in (1, 2):
                 break
             else:
-                print("Valid mode is 1 /2")
+                print("\nValid mode is 1 / 2\n")
         except ValueError:
-            print("Not a valid number. Please choose 1 or 2.")
+            print("\nNot a valid number. Please choose 1 or 2.\n")
     
     match freq_mode:
         case 1:
@@ -94,9 +94,9 @@ def user_input():
                     if interval > 0:
                         break
                     else:
-                        print("Please set a longer interval.")
+                        print("\nPlease set a longer interval.\n")
                 except ValueError:
-                    print("Not a valid number. Please enter a number that is larger than zero.")
+                    print("\nNot a valid number. Please enter a number that is larger than zero.\n")
         case 2:
             while True:
                 interval_input = input("Enter 3 numbers in seconds, separated by comma: ").strip()
@@ -105,16 +105,16 @@ def user_input():
                     if interval_x > 0 and interval_y > 0 and interval_z > 0:
                         break
                     else:
-                        print("Time has to be greater than 0, integer.")
+                        print("\nTime has to be greater than 0, integer.\n")
                 except ValueError:
-                    print("Not a valid number. Please enter a number that is larger than zero.")
+                    print("\nNot a valid number. Please enter a number that is larger than zero.\n")
 
             interval = [interval_x]*(total_pulses/3) + [interval_y]*(total_pulses/3) + [interval_z]* (total_pulses/3)
             interval = random.shuffle(interval)
 
     #ports = list(list_ports.comports())
     #if len(ports) < 2:
-        #sys.exit("At least two serial ports are required.")
+        #sys.exit("\nAt least two serial ports are required.\n")
     
     #print("Availalbe Serial Ports: ")
     #for i, port in enumerate(ports, start=1):
@@ -127,9 +127,9 @@ def user_input():
                 #portA = ports[first - 1].device
                 #break
             #else:
-                #print("Invalid choice.")
+                #print("\nInvalid choice.\n")
         #except ValueError:
-            #print("Please enter a number.")
+            #print("\nPlease enter a number.\n")
 
     #while True:
         #try:
@@ -138,9 +138,9 @@ def user_input():
                 #portB = ports[second - 1].device
                 #break
             #else:
-                #print("Invalid or duplicate choice.")
+                #print("\nInvalid or duplicate choice.\n")
         #except ValueError:
-            #print("Please enter a number.")
+            #print("\nPlease enter a number.\n")
 
     return locals()
     
