@@ -11,8 +11,12 @@ import time
 
 def main():
     os.system("cls" if os.name == "nt" else "clear")
+
     input_data = user_input()
-    print(start_stim(input_data))
+    save_input(input_data)
+
+    full_data = start_stim(input_data)
+    save_stim_output(full_data)
 
 def user_input():
     Start_input = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
@@ -41,7 +45,6 @@ def user_input():
                 print("\nPlease enter a multiple of 6.")
         except ValueError:
             print("\nNot a valid number. Please enter a multiple of 6 integer.")
-
 
     while True:
         print("\nSelect Stimulation Mode: ")
@@ -78,7 +81,6 @@ def user_input():
                         print("\nDelay has to be greater than 0.")
                 except ValueError:
                     print("\nNot a valid number. Delay has to be a non-zero integer.")
-
 
     while True:
         print("\nSelect Frequency Mode: ")
@@ -122,7 +124,7 @@ def user_input():
                 except ValueError:
                     print("\nNot a valid number(s). Please enter 3 integers that are larger than zero.")
 
-            interval = [interval_x]*int((total_pulses/3)) + [interval_y]*int((total_pulses/3)) + [interval_z]*int((total_pulses/3))
+            interval = [interval_x]*int((total_pulses/6)) + [interval_y]*int((total_pulses/6)) + [interval_z]*int((total_pulses/6))
             random.shuffle(interval)
 
     ports = list(list_ports.comports())
@@ -156,10 +158,13 @@ def user_input():
             print("\nPlease enter a number.")
 
     End_input = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    input_data = locals()
+    return locals()
+
+def save_input(input_data):
     keys_to_drop = {"ports", "port", "i"}
     for key in keys_to_drop:
         input_data.pop(key, None)
+
     fieldnames = list(input_data)
 
     input_file_path = Path.cwd() / "logs" / "user_input.csv"
@@ -171,8 +176,6 @@ def user_input():
         if not input_file_exists:
             writer.writeheader() 
         writer.writerow(input_data)
-
-    return input_data
 
 def start_stim(input_data):
     Start_stim = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
@@ -237,23 +240,26 @@ def start_stim(input_data):
     coil_A.close()
     coil_B.close()
 
-    stim_data = locals()
+    return locals()
+
+def save_stim_output(stim_data):
     keys_to_drop = {"i"}
     for key in keys_to_drop:
-        input_data.pop(key, None)
-    fieldnames = list(stim_data)
+        stim_data.pop(key, None)
+    
+    full_data = {**stim_data.pop("input_data"), **stim_data}
 
-    stim_file_path = Path.cwd() / "logs" / "stim_data.csv" 
-    stim_file_path.parent.mkdir(parents=True, exist_ok=True)
-    stim_file_exists = stim_file_path.exists()
+    fieldnames = list(full_data)
 
-    with open(stim_file_path, "a", newline="") as f:
+    full_file_path = Path.cwd() / "logs" / "stim_data.csv" 
+    full_file_path.parent.mkdir(parents=True, exist_ok=True)
+    full_file_exists = full_file_path.exists()
+
+    with open(full_file_path, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
-        if not stim_file_exists:
+        if not full_file_exists:
             writer.writeheader() 
-        writer.writerow(input_data)
-
-    return stim_data
+        writer.writerow(full_data)
 
 
 if __name__ == "__main__":
