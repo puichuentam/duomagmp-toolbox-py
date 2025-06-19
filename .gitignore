@@ -25,3 +25,6 @@ Thumbs.db
 
 # Python metadata
 *.egg-info/
+
+# logged date
+logs/

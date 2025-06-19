@@ -1,20 +1,23 @@
 from datetime import datetime
 from duomag import DUOMAG
+from pathlib import Path
 from serial.tools import list_ports
 import csv
+import os
 import random
 import sys
 import time
 
 
 def main():
-    input_dict = user_input()
-    start_stim(input_dict)
-    #save_output()
-
+    os.system("cls" if os.name == "nt" else "clear")
+    input_data = user_input()
+    print(start_stim(input_data))
 
 def user_input():
-    participant_ID = input("Enter ID: ").strip().replace(" ", "")
+    Start_input = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    print("Please Enter Parameters for Paired-pulse TMS Using DuoMAG Stimulators")
+    participant_ID = input("\nEnter ID: ").strip().replace(" ", "")
     session_ID = input("\nEnter Session Number (e.g., S1): ")
 
     while True:
@@ -58,8 +61,13 @@ def user_input():
     
     match stim_mode:
         case 1:
+            stim_mode_str = "sync"
             delay_ms = 0
         case 2 | 3:
+            if stim_mode == 2:
+                stim_mode_str = "A_then_B"
+            else:
+                stim_mode_str = "B_then_A"
             while True:
                 delay_ms = input("\nEnter Inter-stimulus/inter-pulse interval in ms: ")
                 try:
@@ -70,6 +78,7 @@ def user_input():
                         print("\nDelay has to be greater than 0.")
                 except ValueError:
                     print("\nNot a valid number. Delay has to be a non-zero integer.")
+
 
     while True:
         print("\nSelect Frequency Mode: ")
@@ -88,8 +97,10 @@ def user_input():
     
     match freq_mode:
         case 1:
+            freq_mode_str = "fixed"
             while True:
                 interval = input("\nEnter the fixed frequency in seconds: ")
+                interval_input = interval_x = interval_y = interval_z = "N/A"
                 try:
                     interval = int(interval)
                     if interval > 0:
@@ -99,6 +110,7 @@ def user_input():
                 except ValueError:
                     print("\nNot a valid number. Please enter an integer that is larger than zero.")
         case 2:
+            freq_mode_str = "variable" 
             while True:
                 interval_input = input("\nEnter 3 integers as seconds, separated by comma: ").strip().replace(" ", "")
                 try:
@@ -117,7 +129,7 @@ def user_input():
     if len(ports) < 2:
         sys.exit("\nAt least two serial ports are required.")
     
-    print("\nAvailalbe Serial Ports: ")
+    print("\nAvailable Serial Ports: ")
     for i, port in enumerate(ports, start=1):
         print(f"{i}: {port.device} - {port.description}")
 
@@ -143,15 +155,105 @@ def user_input():
         except ValueError:
             print("\nPlease enter a number.")
 
-    input_filename = f"{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.csv"
-    writer_input = csv.DictWriter()
-    return locals()
+    End_input = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    input_data = locals()
+    keys_to_drop = {"ports", "port", "i"}
+    for key in keys_to_drop:
+        input_data.pop(key, None)
+    fieldnames = list(input_data)
+
+    input_file_path = Path.cwd() / "logs" / "user_input.csv"
+    input_file_path.parent.mkdir(parents=True, exist_ok=True)
+    input_file_exists = input_file_path.exists()
+
+    with open(input_file_path, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if not input_file_exists:
+            writer.writeheader() 
+        writer.writerow(input_data)
+
+    return input_data
+
+def start_stim(input_data):
+    Start_stim = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+
+    coil_A = DUOMAG(input_data["portA"])
+    coil_B = DUOMAG(input_data["portB"])
+
+    coil_A.set_intensity(input_data["intensity"])
+    coil_B.set_intensity(input_data["intensity"])
+
+    interval_index = 0
+    pulse_count = 0
+
+    i = 3
+    while i != 0:
+        print(f"Countdown {i}")
+        time.sleep(1)
+        i -= 1
     
+    print("Beginning Stimulation...")
 
+    while pulse_count < input_data["total_pulses"]:
+        match input_data["stim_mode"]:
+            case 1:
+                coil_A.duopulse()
+                pulse_count += 1
+                print(f"Mode: Synchronized ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+                coil_B.duopulse()
+                pulse_count += 1
+                print(f"Mode: Synchronized ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+
+            case 2:
+                coil_A.duopulse()
+                pulse_count += 1
+                print(f"Mode: A then B ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+                time.sleep(input_data["delay_ms"] / 1000)
+                coil_B.duopulse()
+                pulse_count += 1
+                print(f"Mode: A then B ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+
+            case 3:
+                coil_B.duopulse()
+                pulse_count += 1
+                print(f"Mode: B then A ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+                time.sleep(input_data["delay_ms"] / 1000)
+                coil_A.duopulse()
+                pulse_count += 1
+                print(f"Mode: B then A ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+  
+        if input_data["freq_mode"] == 1:
+            time.sleep(input_data["interval"])
+        else:
+            time.sleep(input_data["interval"][interval_index])
+            interval_index += 1
     
+    print("Stimulation Ended")
+    End_stim = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
+    coil_A.set_intensity()
+    coil_B.set_intensity()
 
+    coil_A.close()
+    coil_B.close()
 
+    stim_data = locals()
+    keys_to_drop = {"i"}
+    for key in keys_to_drop:
+        input_data.pop(key, None)
+    fieldnames = list(stim_data)
+
+    stim_file_path = Path.cwd() / "logs" / "stim_data.csv" 
+    stim_file_path.parent.mkdir(parents=True, exist_ok=True)
+    stim_file_exists = stim_file_path.exists()
+
+    with open(stim_file_path, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if not stim_file_exists:
+            writer.writeheader() 
+        writer.writerow(input_data)
+
+    return stim_data
 
 
 if __name__ == "__main__":
