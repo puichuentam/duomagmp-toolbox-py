@@ -22,7 +22,11 @@ This project is a Python-based port of DuoMAG ToolBox MATLAB script designed to 
 - [PySerial](https://pypi.org/project/pyserial/)
 - DuoMAG Driver for Windows (please check with vendor)
 
-Install dependencies:
+## Instructions
+Install dependency to a venv virtual environment:
 
 ```bash
 pip install pyserial
+```
+
+Then run the project.py script.
