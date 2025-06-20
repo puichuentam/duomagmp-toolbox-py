@@ -5,6 +5,7 @@ from serial.tools import list_ports
 import csv
 import os
 import random
+import serial
 import sys
 import time
 
@@ -198,40 +199,50 @@ def start_stim(input_data):
     print("Beginning Stimulation...")
 
     while pulse_count < input_data["total_pulses"]:
-        match input_data["stim_mode"]:
-            case 1:
-                coil_A.duopulse()
-                pulse_count += 1
-                print(f"Mode: Synchronized ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
-                coil_B.duopulse()
-                pulse_count += 1
-                print(f"Mode: Synchronized ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+        try:
+            match input_data["stim_mode"]:
+                case 1:
+                    coil_A.duopulse()
+                    pulse_count += 1
+                    print(f"Mode: Synchronized ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+                    coil_B.duopulse()
+                    pulse_count += 1
+                    print(f"Mode: Synchronized ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
 
-            case 2:
-                coil_A.duopulse()
-                pulse_count += 1
-                print(f"Mode: A then B ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
-                time.sleep(input_data["delay_ms"] / 1000)
-                coil_B.duopulse()
-                pulse_count += 1
-                print(f"Mode: A then B ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+                case 2:
+                    coil_A.duopulse()
+                    pulse_count += 1
+                    print(f"Mode: A then B ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+                    time.sleep(input_data["delay_ms"] / 1000)
+                    coil_B.duopulse()
+                    pulse_count += 1
+                    print(f"Mode: A then B ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
 
-            case 3:
-                coil_B.duopulse()
-                pulse_count += 1
-                print(f"Mode: B then A ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
-                time.sleep(input_data["delay_ms"] / 1000)
-                coil_A.duopulse()
-                pulse_count += 1
-                print(f"Mode: B then A ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
-  
-        if input_data["freq_mode"] == 1:
-            time.sleep(input_data["interval"])
-        else:
-            time.sleep(input_data["interval"][interval_index])
-            interval_index += 1
+                case 3:
+                    coil_B.duopulse()
+                    pulse_count += 1
+                    print(f"Mode: B then A ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
+                    time.sleep(input_data["delay_ms"] / 1000)
+                    coil_A.duopulse()
+                    pulse_count += 1
+                    print(f"Mode: B then A ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)")
     
-    print("Stimulation Ended")
+            if input_data["freq_mode"] == 1:
+                time.sleep(input_data["interval"])
+            else:
+                time.sleep(input_data["interval"][interval_index])
+                interval_index += 1
+
+        except (serial.serialutil.PortNotOpenError, serial.SerialException, OSError, EOFError, KeyboardInterrupt) as errors:
+            End_stim = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+            coil_A.close()
+            coil_B.close()
+            locals_dict = locals().copy()
+            locals_dict["errors"] = f"{type(errors).__name__}: {errors}"
+            save_stim_output(locals_dict)
+    
+    print("\nStimulation Ended")
+    errors = "None"
     End_stim = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
     coil_A.set_intensity()
@@ -248,9 +259,7 @@ def save_stim_output(stim_data):
         stim_data.pop(key, None)
     
     full_data = {**stim_data.pop("input_data"), **stim_data}
-
     fieldnames = list(full_data)
-
     full_file_path = Path.cwd() / "logs" / "stim_data.csv" 
     full_file_path.parent.mkdir(parents=True, exist_ok=True)
     full_file_exists = full_file_path.exists()
@@ -260,6 +269,7 @@ def save_stim_output(stim_data):
         if not full_file_exists:
             writer.writeheader() 
         writer.writerow(full_data)
+        sys.exit("\nData saved.")
 
 
 if __name__ == "__main__":
