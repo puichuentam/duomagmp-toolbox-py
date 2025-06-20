@@ -6,12 +6,13 @@ This project is a Python-based port of DuoMAG ToolBox MATLAB script designed to 
 
 ## Features
 
-- Supports 3 stimulation modes: synchronized, A→B, and B→A
-- Inter-pulse and inter-pair interval configuration
-- Real-time pulse count tracking
-- Session metadata logging
-- Emergency crash logging(upcoming)
 - Serial communication with DuoMAG MP via PySerial
+- Supports 3 stimulation modes: synchronized, A→B, and B→A
+- Inter-pulse and inter-pair (fixed/variable) interval configuration
+- Pulse Count tracking
+- Session metadata logging
+- Crash logging
+- Data logging (in .csv)
 
 ---
 
@@ -24,4 +25,4 @@ This project is a Python-based port of DuoMAG ToolBox MATLAB script designed to 
 Install dependencies:
 
 ```bash
-pip install pyserial scipy
+pip install pyserial
