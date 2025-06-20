@@ -190,13 +190,15 @@ def start_stim(input_data):
     interval_index = 0
     pulse_count = 0
 
+    print()
+
     i = 3
     while i != 0:
         print(f"Countdown {i}")
         time.sleep(1)
         i -= 1
     
-    print("Beginning Stimulation...")
+    print("\nBeginning Stimulation...\n")
 
     while pulse_count < input_data["total_pulses"]:
         try:
@@ -235,6 +237,7 @@ def start_stim(input_data):
 
         except (serial.serialutil.PortNotOpenError, serial.SerialException, OSError, EOFError, KeyboardInterrupt) as errors:
             End_stim = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+            print("\nEncountered an error. Saving data...")
             coil_A.close()
             coil_B.close()
             locals_dict = locals().copy()
