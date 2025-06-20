@@ -10,7 +10,7 @@ This project is a Python-based port of DuoMAG ToolBox MATLAB script designed to 
 - Inter-pulse and inter-pair interval configuration
 - Real-time pulse count tracking
 - Session metadata logging
-- Emergency crash logging
+- Emergency crash logging(upcoming)
 - Serial communication with DuoMAG MP via PySerial
 
 ---
@@ -20,7 +20,6 @@ This project is a Python-based port of DuoMAG ToolBox MATLAB script designed to 
 - Python 3.8+
 - [PySerial](https://pypi.org/project/pyserial/)
 - DuoMAG Driver for Windows (please check with vendor)
-- (Optional) [`scipy`](https://pypi.org/project/scipy/) if you want to save logs in `.mat` format
 
 Install dependencies:
 
