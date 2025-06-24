@@ -23,8 +23,8 @@ This project is a Python-based port of DuoMAG ToolBox MATLAB script designed to 
 - DuoMAG Driver for Windows (please check with vendor)
 
 ## Instructions
-Install pyserial to a venv virtual environment. 
+Install pyserial and pytest(optional) to a venv virtual environment. 
 Then run the project.py script.
 ```bash
-pip install pyserial
+pip install pyserial pytest
 ```
