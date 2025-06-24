@@ -198,20 +198,3 @@ def test_save_stim_output():
             assert rows[-1]["errors"] == "None"
             assert rows[-1]["End_stim"] == datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
             
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-

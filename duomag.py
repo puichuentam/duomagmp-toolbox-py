@@ -1,11 +1,22 @@
 from serial import Serial, EIGHTBITS, STOPBITS_TWO
 
-class DUOMAG:
-    def __init__(self, port, baudrate=1000000,
-                 bytesize=EIGHTBITS, stopbits=STOPBITS_TWO, timeout=1):
-        self.ser = Serial(port, baudrate=baudrate, bytesize=bytesize,
-                          stopbits=stopbits, timeout=timeout)
 
+class DUOMAG:
+    def __init__(
+        self,
+        port,
+        baudrate=1000000,
+        bytesize=EIGHTBITS,
+        stopbits=STOPBITS_TWO,
+        timeout=1,
+    ):
+        self.ser = Serial(
+            port,
+            baudrate=baudrate,
+            bytesize=bytesize,
+            stopbits=stopbits,
+            timeout=timeout,
+        )
 
     def set_intensity(self, intensity=0):
         if isinstance(intensity, int) == False:
@@ -15,10 +26,8 @@ class DUOMAG:
         else:
             self.ser.write(bytes([intensity, intensity]))
 
-
     def duopulse(self):
         self.ser.write(bytes([121, 121]))
-
 
     def close(self):
         self.ser.close()
