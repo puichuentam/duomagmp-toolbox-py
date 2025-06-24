@@ -2,27 +2,49 @@ from datetime import datetime
 from duomag import DUOMAG
 from pathlib import Path
 from serial.tools import list_ports
+from unittest.mock import patch
 import csv
 import os
 import random
 import serial
-import sys
 import time
 
 
 def main():
     os.system("cls" if os.name == "nt" else "clear")
+    test_mode=False
+    test_mode_q = input("For computer without 2 connected serial ports,\nEnter 'y' to enter Test Mode OR other key for actual stimulation: ")
+    if test_mode_q.lower() == "y":
+        test_mode = True
+    if test_mode:
+        class FakeSerial:
+            def __init__(self, port, *args, **kwargs):
+                self.port = port
+                print(f"FakeSerial initialized for coil: {port}")
+            def write(self, data):
+                print(f"{self.port} write: {list(data)} to stimulator")
+            def close(self):
+                print(f"{self.port} closed")
 
-    input_data = user_input()
-    save_input(input_data)
+        with patch("duomag.Serial", new=FakeSerial):
+            input_data = user_input(test_mode=True)
+            save_input(input_data)
+            full_data = start_stim(input_data)
+            save_stim_output(full_data)
+    else:
+        input_data = user_input()
+        save_input(input_data)
+        full_data = start_stim(input_data)
+        save_stim_output(full_data)
 
-    full_data = start_stim(input_data)
-    save_stim_output(full_data)
 
-
-def user_input():
+def user_input(test_mode=False):
     Start_input = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    print("Please Enter Parameters for Paired-pulse TMS Using DuoMAG Stimulators")
+    if test_mode:
+        print("\nPlease Enter Parameters for TEST MODE")
+    else:
+        print("\nPlease Enter Parameters for Paired-pulse TMS Using DuoMAG Stimulators")
+        
     participant_ID = input("\nEnter ID: ").strip().replace(" ", "")
     session_ID = input("\nEnter Session Number (e.g., S1): ")
 
@@ -145,14 +167,14 @@ def user_input():
             )
             random.shuffle(interval)
 
-    ports = list(list_ports.comports())
-    if len(ports) < 2:
-        print("\nLess than two serial ports are found. Using fake ports instead.")
-        portA = "fakeCOM1"
-        portB = "fakeCOM2"
+    if test_mode:
+        ports = "FakePorts"
         first = "None"
+        portA = "FakeCoilA"
         second = "None"
+        portB = "FakeCoilB"
     else:
+        ports = list(list_ports.comports())
         print("\nAvailable Serial Ports: ")
         for i, port in enumerate(ports, start=1):
             print(f"{i}: {port.device} - {port.description}")
@@ -202,7 +224,7 @@ def user_input():
         "second": second,
         "portB": portB,
         "End_input": End_input,
-    }
+        }
 
 
 def save_input(input_data):
@@ -222,31 +244,9 @@ def save_input(input_data):
 def start_stim(input_data, coil_A=None, coil_B=None):
     Start_stim = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
-    class FAKEDUOMAG:
-        def __init__(self, port):
-            self.port = port
-            self.written = []
-
-        def write(self, data):
-            self.written.append(data)
-
-        def set_intensity(self, intensity=None):
-            self.write(bytes([intensity or 0, intensity or 0]))
-
-        def duopulse(self):
-            self.write(bytes([121, 121]))
-
-        def close(self):
-            pass
-
-    if input_data["portA"] == "fakeCOM1":
-        coil_A = FAKEDUOMAG(input_data["portA"])
-    else:
+    if coil_A is None:
         coil_A = DUOMAG(input_data["portA"])
-
-    if input_data["portB"] == "fakeCOM2":
-        coil_B = FAKEDUOMAG(input_data["portB"])
-    else:
+    if coil_B is None:
         coil_B = DUOMAG(input_data["portB"])
 
     coil_A.set_intensity(input_data["intensity"])
@@ -379,7 +379,7 @@ def save_stim_output(stim_data):
         if not full_file_exists:
             writer.writeheader()
         writer.writerow(stim_data)
-        print("Data saved.")
+        print("\nData saved.")
 
 
 if __name__ == "__main__":

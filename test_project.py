@@ -141,6 +141,12 @@ def test_start_stim(monkeypatch):
 
     project.start_stim(config, coil_A=fakeA, coil_B=fakeB)
 
+    assert fakeA.written[0] == bytes([50, 50])
+    assert fakeB.written[0] == bytes([50, 50])
+    assert fakeA.written[1:4] == [b"yy", b"yy", b"yy"]
+    assert fakeB.written[1:4] == [b"yy", b"yy", b"yy"]
+    assert fakeA.written[-1] == bytes([0, 0])
+    assert fakeB.written[-1] == bytes([0, 0])
 
 
 def test_save_stim_output():
