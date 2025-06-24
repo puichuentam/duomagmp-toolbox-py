@@ -17,6 +17,10 @@ class DUOMAG:
             stopbits=stopbits,
             timeout=timeout,
         )
+        self.written = []
+
+    def write(self, data):
+        self.written.append(data)
 
     def set_intensity(self, intensity=0):
         if isinstance(intensity, int) == False:
@@ -25,9 +29,11 @@ class DUOMAG:
             raise ValueError("Intensity must be between 1 and 100.")
         else:
             self.ser.write(bytes([intensity, intensity]))
+            self.write(bytes([intensity, intensity]))
 
     def duopulse(self):
         self.ser.write(bytes([121, 121]))
+        self.write(bytes([121, 121]))
 
     def close(self):
         self.ser.close()

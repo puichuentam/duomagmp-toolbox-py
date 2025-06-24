@@ -147,33 +147,37 @@ def user_input():
 
     ports = list(list_ports.comports())
     if len(ports) < 2:
-        sys.exit("\nAt least two serial ports are required.")
+        print("\nLess than two serial ports are found. Using fake ports instead.")
+        portA = "fakeCOM1"
+        portB = "fakeCOM2"
+        first = "None"
+        second = "None"
+    else:
+        print("\nAvailable Serial Ports: ")
+        for i, port in enumerate(ports, start=1):
+            print(f"{i}: {port.device} - {port.description}")
 
-    print("\nAvailable Serial Ports: ")
-    for i, port in enumerate(ports, start=1):
-        print(f"{i}: {port.device} - {port.description}")
+        while True:
+            try:
+                first = int(input(f"\nSelect a port for coil A [1-{len(ports)}]: "))
+                if 1 <= first <= len(ports):
+                    portA = ports[first - 1].device
+                    break
+                else:
+                    print("\nInvalid choice.")
+            except ValueError:
+                print("\nPlease enter a number.")
 
-    while True:
-        try:
-            first = int(input(f"\nSelect a port for coil A [1-{len(ports)}]: "))
-            if 1 <= first <= len(ports):
-                portA = ports[first - 1].device
-                break
-            else:
-                print("\nInvalid choice.")
-        except ValueError:
-            print("\nPlease enter a number.")
-
-    while True:
-        try:
-            second = int(input(f"\nSelect another port for coil B [1-{len(ports)}]: "))
-            if 1 <= second <= len(ports) and second != first:
-                portB = ports[second - 1].device
-                break
-            else:
-                print("\nInvalid or duplicate choice.")
-        except ValueError:
-            print("\nPlease enter a number.")
+        while True:
+            try:
+                second = int(input(f"\nSelect another port for coil B [1-{len(ports)}]: "))
+                if 1 <= second <= len(ports) and second != first:
+                    portB = ports[second - 1].device
+                    break
+                else:
+                    print("\nInvalid or duplicate choice.")
+            except ValueError:
+                print("\nPlease enter a number.")
 
     End_input = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
@@ -218,9 +222,31 @@ def save_input(input_data):
 def start_stim(input_data, coil_A=None, coil_B=None):
     Start_stim = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
-    if coil_A is None:
+    class FAKEDUOMAG:
+        def __init__(self, port):
+            self.port = port
+            self.written = []
+
+        def write(self, data):
+            self.written.append(data)
+
+        def set_intensity(self, intensity=None):
+            self.write(bytes([intensity or 0, intensity or 0]))
+
+        def duopulse(self):
+            self.write(bytes([121, 121]))
+
+        def close(self):
+            pass
+
+    if input_data["portA"] == "fakeCOM1":
+        coil_A = FAKEDUOMAG(input_data["portA"])
+    else:
         coil_A = DUOMAG(input_data["portA"])
-    if coil_B is None:
+
+    if input_data["portB"] == "fakeCOM2":
+        coil_B = FAKEDUOMAG(input_data["portB"])
+    else:
         coil_B = DUOMAG(input_data["portB"])
 
     coil_A.set_intensity(input_data["intensity"])
