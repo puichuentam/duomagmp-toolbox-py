@@ -59,7 +59,7 @@ def test_user_input(monkeypatch, capsys):
     assert result["portB"] == "COMTest2"
 
 
-def test_save_input(monkeypatch, tmp_path):
+def test_save_input(monkeypatch):
     result = simulate_user_input(monkeypatch, [
             "testID",# participant_ID 
             "S1", # session_ID
@@ -88,28 +88,58 @@ def test_save_input(monkeypatch, tmp_path):
         assert rows[-1]["interval_z"] == "5"
         assert rows[-1]["portA"] == "COMTest1"
         assert rows[-1]["portB"] == "COMTest2"
+    
 
 def test_start_stim(monkeypatch):
-    written_coilA = []
-    written_coilB = []     
+        
+    config = {
+        'Start_input': '2025_06_24_10_07_20', 
+        'participant_ID': 'testID', 
+        'session_ID': 'S1', 
+        'intensity': 50, 
+        'total_pulses': 6, 
+        'stim_mode': 2, 
+        'stim_mode_str': 'A_then_B', 
+        'delay_ms': 100, 
+        'freq_mode': 2, 
+        'freq_mode_str': 'variable', 
+        'interval': [1, 2, 3], 
+        'interval_input': '1,2,3', 
+        'interval_x': 1, 
+        'interval_y': 2, 
+        'interval_z': 3, 
+        'first': 1, 
+        'portA': 'COMTest1', 
+        'second': 2, 
+        'portB': 'COMTest2',
+        'End_input': '2025_06_24_10_08_01'
+        }
     class FAKEDUOMAG:
         def __init__(self, port): 
             self.port = port
-
-        def set_intensity(self, intensity=None):
-            pass
+            self.written = []
 
         def write(self, data):
-            if self.port == "COMTest1":
-                written_coilA.append(data)
-            else:
-                written_coilB.append(data)
+            self.written.append(data)
 
-        def read(self):
-            return b"OK"
+        def set_intensity(self, intensity=None):
+            self.write(bytes([intensity or 0])) 
+
+        def duopulse(self):
+            self.write(bytes([121, 121]))
 
         def close(self):
             pass
+
+    fakeA = FAKEDUOMAG(config["portA"])
+    fakeB = FAKEDUOMAG(config["portB"])
+
+    monkeypatch.setattr("time.sleep", lambda x: None)
+
+    result = project.start_stim(config, coil_A=fakeA, coil_B=fakeB)
+
+    
+
 
         
 

@@ -178,11 +178,13 @@ def save_input(input_data):
             writer.writeheader() 
         writer.writerow(input_data)
 
-def start_stim(input_data):
+def start_stim(input_data, coil_A=None, coil_B=None):
     Start_stim = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
-    coil_A = DUOMAG(input_data["portA"])
-    coil_B = DUOMAG(input_data["portB"])
+    if coil_A is None:
+        coil_A = DUOMAG(input_data["portA"])
+    if coil_B is None:
+        coil_B = DUOMAG(input_data["portB"])
 
     coil_A.set_intensity(input_data["intensity"])
     coil_B.set_intensity(input_data["intensity"])
