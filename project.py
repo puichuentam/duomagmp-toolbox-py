@@ -159,13 +159,31 @@ def user_input():
             print("\nPlease enter a number.")
 
     End_input = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    return locals()
+
+    return {
+        "Start_input": Start_input,
+        "participant_ID": participant_ID,
+        "session_ID": session_ID,
+        "intensity": intensity,
+        "total_pulses": total_pulses,
+        "stim_mode": stim_mode,
+        "stim_mode_str": stim_mode_str,
+        "delay_ms": delay_ms,
+        "freq_mode": freq_mode,
+        "freq_mode_str": freq_mode_str,
+        "interval": interval,
+        "interval_input": interval_input,
+        "interval_x": interval_x,
+        "interval_y": interval_y,
+        "interval_z": interval_z,
+        "first": first,
+        "portA": portA,
+        "second": second,
+        "portB": portB,
+        "End_input": End_input
+    }
 
 def save_input(input_data):
-    keys_to_drop = {"ports", "port", "i"}
-    for key in keys_to_drop:
-        input_data.pop(key, None)
-
     fieldnames = list(input_data)
 
     input_file_path = Path.cwd() / "logs" / "user_input.csv"
@@ -256,15 +274,38 @@ def start_stim(input_data, coil_A=None, coil_B=None):
     coil_A.close()
     coil_B.close()
 
-    return locals()
+    return {
+        "Start_input": input_data["Start_input"],
+        "participant_ID": input_data["participant_ID"],
+        "session_ID": input_data["session_ID"],
+        "intensity": input_data["intensity"],
+        "total_pulses": input_data["total_pulses"],
+        "stim_mode": input_data["stim_mode"],
+        "stim_mode_str": input_data["stim_mode_str"],
+        "delay_ms": input_data["delay_ms"],
+        "freq_mode": input_data["freq_mode"],
+        "freq_mode_str": input_data["freq_mode_str"],
+        "interval": input_data["interval"],
+        "interval_input": input_data["interval_input"],
+        "interval_x": input_data["interval_x"],
+        "interval_y": input_data["interval_y"],
+        "interval_z": input_data["interval_z"],
+        "first": input_data["first"],
+        "portA": input_data["portA"],
+        "second": input_data["second"],
+        "portB": input_data["portB"],
+        "End_input": input_data["End_input"],
+        "Start_stim": Start_stim,
+        "coil_A": coil_A,
+        "coil_B": coil_B,
+        "interval_index": interval_index,
+        "pulse_count": pulse_count,
+        "errors": errors,
+        "End_stim": End_stim
+    }
 
 def save_stim_output(stim_data):
-    keys_to_drop = {"i"}
-    for key in keys_to_drop:
-        stim_data.pop(key, None)
-    
-    full_data = {**stim_data.pop("input_data"), **stim_data}
-    fieldnames = list(full_data)
+    fieldnames = list(stim_data)
     full_file_path = Path.cwd() / "logs" / "stim_data.csv" 
     full_file_path.parent.mkdir(parents=True, exist_ok=True)
     full_file_exists = full_file_path.exists()
@@ -273,8 +314,8 @@ def save_stim_output(stim_data):
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         if not full_file_exists:
             writer.writeheader() 
-        writer.writerow(full_data)
-        sys.exit("\nData saved.")
+        writer.writerow(stim_data)
+        print("Data saved.")
 
 
 if __name__ == "__main__":

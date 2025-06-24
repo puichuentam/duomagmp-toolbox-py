@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 import csv
 import project
@@ -46,6 +47,7 @@ def test_user_input(monkeypatch, capsys):
     assert "Invalid choice." in out
     assert "Invalid or duplicate choice." in out
 
+    assert result["Start_input"] == datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     assert result["participant_ID"] == "testID"
     assert result["session_ID"] == "S1"
     assert result["intensity"] == 50
@@ -57,7 +59,7 @@ def test_user_input(monkeypatch, capsys):
     assert result["interval_z"] == 5
     assert result["portA"] == "COMTest1"
     assert result["portB"] == "COMTest2"
-
+    assert result["End_input"] == datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
 def test_save_input(monkeypatch):
     result = simulate_user_input(monkeypatch, [
@@ -93,26 +95,26 @@ def test_save_input(monkeypatch):
 def test_start_stim(monkeypatch):
         
     config = {
-        'Start_input': '2025_06_24_10_07_20', 
-        'participant_ID': 'testID', 
-        'session_ID': 'S1', 
-        'intensity': 50, 
-        'total_pulses': 6, 
-        'stim_mode': 2, 
-        'stim_mode_str': 'A_then_B', 
-        'delay_ms': 100, 
-        'freq_mode': 2, 
-        'freq_mode_str': 'variable', 
-        'interval': [1, 2, 3], 
-        'interval_input': '1,2,3', 
-        'interval_x': 1, 
-        'interval_y': 2, 
-        'interval_z': 3, 
-        'first': 1, 
-        'portA': 'COMTest1', 
-        'second': 2, 
-        'portB': 'COMTest2',
-        'End_input': '2025_06_24_10_08_01'
+        "Start_input": datetime.now().strftime("%Y_%m_%d_%H_%M_%S"), 
+        "participant_ID": "testID", 
+        "session_ID": "S1", 
+        "intensity": 50, 
+        "total_pulses": 6, 
+        "stim_mode": 2, 
+        "stim_mode_str": "A_then_B", 
+        "delay_ms": 100, 
+        "freq_mode": 2, 
+        "freq_mode_str": "variable", 
+        "interval": [1,2,3], 
+        "interval_input": "1,2,3", 
+        "interval_x": 1, 
+        "interval_y": 2, 
+        "interval_z": 3, 
+        "first": 1, 
+        "portA": "COMTest1", 
+        "second": 2, 
+        "portB": "COMTest2",
+        "End_input": datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         }
     class FAKEDUOMAG:
         def __init__(self, port): 
@@ -123,7 +125,7 @@ def test_start_stim(monkeypatch):
             self.written.append(data)
 
         def set_intensity(self, intensity=None):
-            self.write(bytes([intensity or 0])) 
+            self.write(bytes([intensity or 0, intensity or 0])) 
 
         def duopulse(self):
             self.write(bytes([121, 121]))
@@ -136,9 +138,68 @@ def test_start_stim(monkeypatch):
 
     monkeypatch.setattr("time.sleep", lambda x: None)
 
-    result = project.start_stim(config, coil_A=fakeA, coil_B=fakeB)
+    project.start_stim(config, coil_A=fakeA, coil_B=fakeB)
 
-    
+    assert fakeA.written[0] == bytes([50, 50])
+    assert fakeB.written[0] == bytes([50, 50])
+    assert fakeA.written[1:4] == [b"yy", b"yy", b"yy"]
+    assert fakeB.written[1:4] == [b"yy", b"yy", b"yy"]
+    assert fakeA.written[-1] == bytes([0, 0])
+    assert fakeB.written[-1] == bytes([0, 0])
+
+
+def test_save_stim_output():
+
+        config = {
+        "Start_input": datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
+        "participant_ID": "testID",
+        "session_ID": "S1", 
+        "intensity": 50, 
+        "total_pulses": 6, 
+        "stim_mode": 2, 
+        "stim_mode_str": "A_then_B", 
+        "delay_ms": 100, 
+        "freq_mode": 2, 
+        "freq_mode_str": "variable", 
+        "interval": [3, 1, 2], 
+        "interval_input": "1,2,3", 
+        "interval_x": 1, 
+        "interval_y": 2, 
+        "interval_z": 3, 
+        "first": 1, 
+        "portA": "COMTest1", 
+        "second": 2, 
+        "portB": "COMTest2",
+        "End_input": datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
+        "Start_stim": datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
+        "coil_A": "fakeA",
+        "coil_B": "fakeB",
+        "interval_index": 3,
+        "pulse_count": 6,
+        "errors": "None",
+        "End_stim": datetime.now().strftime("%Y_%m_%d_%H_%M_%S") 
+        }
+
+        project.save_stim_output(config)
+
+        with open(Path.cwd() / "logs" / "stim_data.csv") as file:
+            rows = list(csv.DictReader(file))
+
+            assert rows[-1]["Start_input"] == datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+            assert rows[-1]["freq_mode"] == "2"
+            assert rows[-1]["interval"] == "[3, 1, 2]"
+            assert rows[-1]["portA"] == "COMTest1"
+            assert rows[-1]["portB"] == "COMTest2"
+            assert rows[-1]["End_input"] == datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+            assert rows[-1]["Start_stim"] == datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+            assert rows[-1]["coil_A"] == "fakeA"
+            assert rows[-1]["coil_B"] == "fakeB"
+            assert rows[-1]["pulse_count"] == "6"
+            assert rows[-1]["errors"] == "None"
+            assert rows[-1]["End_stim"] == datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+            
+
+
 
 
         
