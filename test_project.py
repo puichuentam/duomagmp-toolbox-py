@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 import csv
 import project
+import pytest
 
 
 def simulate_user_input(monkeypatch, inputs_list):
@@ -181,7 +182,9 @@ def test_save_stim_output():
         "End_stim": datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         }
 
-        project.save_stim_output(config)
+        with pytest.raises(SystemExit) as code:
+            project.save_stim_output(config)
+        assert code.value.code == "\nData saved."
 
         with open(Path.cwd() / "logs" / "stim_data.csv") as file:
             rows = list(csv.DictReader(file))
@@ -198,3 +201,4 @@ def test_save_stim_output():
             assert rows[-1]["pulse_count"] == "6"
             assert rows[-1]["errors"] == "None"
             assert rows[-1]["End_stim"] == datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+

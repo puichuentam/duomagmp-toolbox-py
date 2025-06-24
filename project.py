@@ -7,22 +7,28 @@ import csv
 import os
 import random
 import serial
+import sys
 import time
 
 
 def main():
     os.system("cls" if os.name == "nt" else "clear")
-    test_mode=False
-    test_mode_q = input("For computer without 2 connected serial ports,\nEnter 'y' to enter Test Mode OR other key for actual stimulation: ")
+    test_mode = False
+    test_mode_q = input(
+        "For computer without 2 connected serial ports,\nEnter 'y' to enter Test Mode OR other key for actual stimulation: "
+    )
     if test_mode_q.lower() == "y":
         test_mode = True
     if test_mode:
+
         class FakeSerial:
             def __init__(self, port, *args, **kwargs):
                 self.port = port
                 print(f"FakeSerial initialized for coil: {port}")
+
             def write(self, data):
                 print(f"{self.port} write: {list(data)} to stimulator")
+
             def close(self):
                 print(f"{self.port} closed")
 
@@ -44,7 +50,7 @@ def user_input(test_mode=False):
         print("\nPlease Enter Parameters for TEST MODE")
     else:
         print("\nPlease Enter Parameters for Paired-pulse TMS Using DuoMAG Stimulators")
-        
+
     participant_ID = input("\nEnter ID: ").strip().replace(" ", "")
     session_ID = input("\nEnter Session Number (e.g., S1): ")
 
@@ -175,6 +181,8 @@ def user_input(test_mode=False):
         portB = "FakeCoilB"
     else:
         ports = list(list_ports.comports())
+        if len(ports) < 2:
+            sys.exit("Less than 2 serial ports connected. Please check connection. Exiting...")
         print("\nAvailable Serial Ports: ")
         for i, port in enumerate(ports, start=1):
             print(f"{i}: {port.device} - {port.description}")
@@ -192,7 +200,9 @@ def user_input(test_mode=False):
 
         while True:
             try:
-                second = int(input(f"\nSelect another port for coil B [1-{len(ports)}]: "))
+                second = int(
+                    input(f"\nSelect another port for coil B [1-{len(ports)}]: ")
+                )
                 if 1 <= second <= len(ports) and second != first:
                     portB = ports[second - 1].device
                     break
@@ -224,7 +234,7 @@ def user_input(test_mode=False):
         "second": second,
         "portB": portB,
         "End_input": End_input,
-        }
+    }
 
 
 def save_input(input_data):
@@ -323,9 +333,37 @@ def start_stim(input_data, coil_A=None, coil_B=None):
             print("\nEncountered an error. Saving data...")
             coil_A.close()
             coil_B.close()
-            locals_dict = locals().copy()
-            locals_dict["errors"] = f"{type(errors).__name__}: {errors}"
-            save_stim_output(locals_dict)
+
+            output = {
+                "Start_input": input_data["Start_input"],
+                "participant_ID": input_data["participant_ID"],
+                "session_ID": input_data["session_ID"],
+                "intensity": input_data["intensity"],
+                "total_pulses": input_data["total_pulses"],
+                "stim_mode": input_data["stim_mode"],
+                "stim_mode_str": input_data["stim_mode_str"],
+                "delay_ms": input_data["delay_ms"],
+                "freq_mode": input_data["freq_mode"],
+                "freq_mode_str": input_data["freq_mode_str"],
+                "interval": input_data["interval"],
+                "interval_input": input_data["interval_input"],
+                "interval_x": input_data["interval_x"],
+                "interval_y": input_data["interval_y"],
+                "interval_z": input_data["interval_z"],
+                "first": input_data["first"],
+                "portA": input_data["portA"],
+                "second": input_data["second"],
+                "portB": input_data["portB"],
+                "End_input": input_data["End_input"],
+                "Start_stim": Start_stim,
+                "coil_A": coil_A,
+                "coil_B": coil_B,
+                "interval_index": interval_index,
+                "pulse_count": pulse_count,
+                "errors": f"{type(errors).__name__}: {errors}",
+                "End_stim": End_stim,
+            }
+            save_stim_output(output)
 
     print("\nStimulation Ended")
     errors = "None"
@@ -379,7 +417,7 @@ def save_stim_output(stim_data):
         if not full_file_exists:
             writer.writeheader()
         writer.writerow(stim_data)
-        print("\nData saved.")
+        sys.exit("\nData saved.")
 
 
 if __name__ == "__main__":
