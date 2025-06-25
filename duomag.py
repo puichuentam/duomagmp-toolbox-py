@@ -18,9 +18,6 @@ class DUOMAG:
             timeout=timeout,
         )
 
-    def write(self, data):
-        self.written.append(data)
-
     def set_intensity(self, intensity=0):
         if isinstance(intensity, int) == False:
             raise ValueError("Intensity must be an integer between 1 and 100.")
