@@ -182,7 +182,9 @@ def user_input(test_mode=False):
     else:
         ports = list(list_ports.comports())
         if len(ports) < 2:
-            sys.exit("Less than 2 serial ports connected. Please check connection. Exiting...")
+            sys.exit(
+                "Less than 2 serial ports connected. Please check connection. Exiting..."
+            )
         print("\nAvailable Serial Ports: ")
         for i, port in enumerate(ports, start=1):
             print(f"{i}: {port.device} - {port.description}")
