@@ -1,5 +1,6 @@
 from datetime import datetime
 from duomag import DUOMAG
+from net_sender import NetSender
 from pathlib import Path
 from serial.tools import list_ports
 from unittest.mock import patch
@@ -260,6 +261,8 @@ def start_stim(input_data, coil_A=None, coil_B=None):
         coil_A = DUOMAG(input_data["portA"])
     if coil_B is None:
         coil_B = DUOMAG(input_data["portB"])
+    
+    net = NetSender(host="192.168.0.152", port=5005, use_tcp=False)
 
     coil_A.set_intensity(input_data["intensity"])
     coil_B.set_intensity(input_data["intensity"])
@@ -287,6 +290,7 @@ def start_stim(input_data, coil_A=None, coil_B=None):
                         f"Mode: Synchronized ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)"
                     )
                     coil_B.duopulse()
+                    net.send("B")
                     pulse_count += 1
                     print(
                         f"Mode: Synchronized ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)"
@@ -300,6 +304,7 @@ def start_stim(input_data, coil_A=None, coil_B=None):
                     )
                     time.sleep(input_data["delay_ms"] / 1000)
                     coil_B.duopulse()
+                    net.send("B")
                     pulse_count += 1
                     print(
                         f"Mode: A then B ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)"
@@ -307,6 +312,7 @@ def start_stim(input_data, coil_A=None, coil_B=None):
 
                 case 3:
                     coil_B.duopulse()
+                    net.send("B")
                     pulse_count += 1
                     print(
                         f"Mode: B then A ({pulse_count}/{input_data["total_pulses"]} Pulses Delivered)"
@@ -335,6 +341,7 @@ def start_stim(input_data, coil_A=None, coil_B=None):
             print("\nEncountered an error. Saving data...")
             coil_A.close()
             coil_B.close()
+            net.close()
 
             output = {
                 "Start_input": input_data["Start_input"],
@@ -376,6 +383,8 @@ def start_stim(input_data, coil_A=None, coil_B=None):
 
     coil_A.close()
     coil_B.close()
+
+    net.close()
 
     return {
         "Start_input": input_data["Start_input"],
